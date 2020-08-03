@@ -51,6 +51,7 @@
 
         xs = d3.scaleLinear().domain(xdomain).range(xrange);
         ys = d3.scaleLinear().domain(ydomain).range(yrange);
+        cs = d3.scaleLinear().domain(xdomain).range([1, 0]);
 
         var tooltip = d3.select("#tooltip");
 
@@ -65,7 +66,7 @@
             .attr('y', (d, i) => ys(i))
             .attr('width', d => xs(d.cases))
             .attr('height',30)
-            .attr('fill', 'lightseagreen')
+            .attr('fill', d => d3.interpolateMagma(cs(d.cases)))
             // .on("mouseover", function(d,i) {
             //     tooltip.style("opacity", 1)
             //         .style("left",(d3.event.pageX)+"px")
