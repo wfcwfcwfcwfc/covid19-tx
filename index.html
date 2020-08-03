@@ -11,7 +11,7 @@
 <div class="buttons">
     <a href="bycounty.html"><button id="Next" >Next: Cumulative Cases by County</button></a>
 </div>
-
+<div class="buttons"><img src="s1_include.png" alt="total bracket" height="100px" width="1000px"> </div>
 <svg width=600 height=600>
 
 </svg>
@@ -96,6 +96,31 @@
         .on("mosueout", function () {
             tooltip.style("opacity",0)
         });
+
+        var annotationx = ["570", "700", "870"]
+        var annotationy = ["550", "460", "280"]
+        var annotationText = ["May-27 Reopen Begins", "June-15 (incubation 15 days)", "Hover to Show Details"]
+        d3.select('svg').append('g').attr('transform', 'translate('+margin+','+margin+')').selectAll('circle')
+            .data(annotationx).enter().append('circle')
+            .attr('cx', (d, i) =>  {return d})
+            .attr('cy', (d, i) => annotationy[i])
+            .attr('r', (d, i) => 30)
+        .attr('fill', 'none')
+        .attr('stroke', 'tomato')
+        .attr('stroke-width', '5')
+
+        d3.select('svg')
+            .select('g')
+            .selectAll('text')
+            .data(annotationx)
+            .enter()
+            .append("text")
+            .attr('class', 'label')
+            .attr('x', (d, i) =>  {return d - 120})
+            .attr('y', (d, i) => annotationy[i] - 60)
+            // .attr('dy', "75em")
+            .text((d, i) => annotationText[i])
+
 
         // height - ys(d.cases)
 
