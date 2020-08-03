@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<script src="https://d3js.org/d3-array.v2.min.js"></script>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body onload="init()">
+<h1>COVID-19 Cases, Fatalities and Tests Conducted (TX, Cumulative)</h1>
+<div class="buttons">
+    <a href="bycounty.html"> <button id="Previous">Previous: Cumulative Cases by County</button></a>
+</div>
+<div id="selector"><label>Select Track: </label>
+    <select id="selectButton"></select>
+</div>
+<svg id="svg1"></svg>
+<div id="desc">
+    <p>The number of new cases is still rapidly growing. It is unknown that when the peak will be reached.</p>
+    <p>Fatalities remains high but started to reach the plateau phase. It might be due to the mutation of the virus caused a decrease of lethal power.</p>
+    <p>Test capability is growing. </p>
+</div>
+<script>
+    const width = 1500;
+    const height = 1000;
+
+
+    var allGroup = ["Cases", "Fatalities", "Tests"]
+    var posMap = {Cases: 0, Fatalities: 1, Tests:2}
+    var colorMap = {Cases: "dodgerblue", Fatalities: "springgreen", Tests: "blueviolet"}
+
+    var data;
+    async function init() {
+        data = await d3.csv('multiline.csv');
+
+        d3.select("#selectButton")
+            .selectAll('myOptions')
+            .data(allGroup)
+            .enter()
+            .append('option')
+            .text(function (d) {
+                return d;
+            }) // text showed in the menu
+            .attr("value", function (d) {
+                return d;
+            }) // corresponding value returned by the button
+
+        data = {
+            y: "Count",
+            series: data.columns.slice(1).map(key => ({
+                name: key,
+                values: data.map(d => parseInt(d[key]))
+            })),
+            dates: data.map(d => d.Date).map(d3.utcParse("%m/%d/%Y"))
+        };
+
+        plotChart("Cases")
+    }
+
+    function plotChart(selected) {
+
+        var selectedPos = posMap[selected];
+        const height = 600
+        const margin = ({top: 50, right: 200, bottom: 30, left: 100})
+
+        x = d3.scaleUtc()
+            .domain(d3.extent(data.dates))
+            .range([margin.left, width - margin.right])
+
+        y = d3.scaleLinear()
+            .domain([0, d3.max(data.series[selectedPos].values)]).nice()
+            .range([height - margin.bottom, margin.top])
+
+        xAxis = g => g
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+            .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
+
+        yAxis = g => g
+            .attr("transform", `translate(${margin.left},0)`)
+            .call(d3.axisLeft(y))
+            .call(g => g.select(".domain").remove())
+            .call(g => g.select(".tick:last-of-type text").clone()
+                .attr("x", 3)
+                .attr("text-anchor", "start")
+                .attr("font-weight", "bold")
+                .text(data.y))
+
+        line = d3.line()
+            .defined(d => !isNaN(d))
+            .x((d, i) => x(data.dates[i]))
+            .y(d => y(d))
+
+
+        const svg = d3.select("svg")
+            .attr("viewBox", [0, 0, width, height])
+            .style("overflow", "visible");
+
+        svg.append("g")
+            .call(xAxis);
+
+        svg.append("g")
+            .call(yAxis);
+
+        var path = svg.append("g")
+            .attr("fill", "none")
+            .attr("stroke", colorMap[selected])
+            .attr("stroke-width", 5)
+            .attr("stroke-linejoin", "round")
+            .attr("stroke-linecap", "round")
+            .selectAll("path")
+            .data(data.series.slice(selectedPos, selectedPos + 1))
+            .join("path")
+            .style("mix-blend-mode", "multiply")
+            .attr("d", d => line(d.values));
+
+        // svg.call(d => d, path);
+    }
+
+    function update(selectedGroup) {
+        document.getElementById("svg1").innerHTML = "";
+        plotChart(selectedGroup)
+    }
+
+    // When the button is changed, run the updateChart function
+    d3.select("#selectButton").on("change", function (d) {
+        var selectedOption = d3.select(this).property("value")
+        update(selectedOption)
+    })
+
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="styles.css">
+    <title>COVID-19 Texas - Top 100 Counties</title>
+</head>
+<body onload='init()'>
+<h1>Top 20 Counties with Highest Number Of Cases in Texas (8/1/2020)</h1>
+<div class="buttons">
+    <a href="index.html"><button id="Previous">Previous: Daily new Cases</button></a>
+    <a href="multiline.html"><button id="Next">Next: Cumulative Cases, Fatalities and Tests</button></a>
+</div>
+<div id="desc">
+    <p>Harris County (Houston) has the highest number of cases.</p>
+    <p>Dallas, Tarrant County (Dallas, Fort Worth) and Bexar County (San Antonio) also has a large number of cases.</p>
+    <p></p>
+</div>
+<svg width=600 height=600>
+
+</svg>
+<div id="tooltip" opacity=0></div>
+
+<script>
+    async function init() {
+
+        const byCountyData = await d3.csv('bycounty.CSV')
+        console.log(byCountyData);
+
+        drawByCountyChart(byCountyData)
+    }
+
+
+
+    function drawByCountyChart(data, day) {
+        var width = 1000;
+        var height = 1000;
+        var margin = 50;
+
+        xdomain = [0,80000];
+        xrange = [0,width];
+        ydomain = [0,19];
+        yrange = [0,height];
+
+        d3.select("svg")
+            .attr("width",width+ 2*margin)
+            .attr("height",height+ 2*margin)
+            .append("g")
+            .attr("transform","translate("+margin+","+margin+")")
+
+        xs = d3.scaleLinear().domain(xdomain).range(xrange);
+        ys = d3.scaleLinear().domain(ydomain).range(yrange);
+
+        var tooltip = d3.select("#tooltip");
+
+        d3.select('svg')
+            .append('g')
+            .attr('transform', 'translate('+margin+','+margin+')')
+            .selectAll('rect')
+            .data(data)
+            .enter()
+            .append('rect')
+            .attr('x', 0)
+            .attr('y', (d, i) => ys(i))
+            .attr('width', d => xs(d.cases))
+            .attr('height',30)
+            .attr('fill', 'lightseagreen')
+            // .on("mouseover", function(d,i) {
+            //     tooltip.style("opacity", 1)
+            //         .style("left",(d3.event.pageX)+"px")
+            //         .style("top",(d3.event.pageY)+"px")
+            //         .html(d.CountyName+" County has "+d.cases+" Cases");
+            // })
+            // .on("mosueout", function () {
+            //     tooltip.style("opacity",0)
+            // })
+        ;
+
+        d3.select('svg')
+            .select('g')
+            .selectAll('text')
+            .data(data)
+            .enter()
+            .append("text")
+            .attr('class', 'label')
+            .attr('x', d => xs(d.cases) + 8)
+            .attr('y', (d, i) => ys(i) + 20)
+            // .attr('dy', "75em")
+            .text(d => d.cases + " " + d.CountyName)
+
+        // height - ys(d.cases)
+
+
+        var x = d3.scaleLinear().domain(xdomain).range([0,width]);
+        var y = d3.scaleLinear().domain(ydomain).range([height,0])
+
+        d3.select("svg").append("g")
+            .attr("transform","translate("+margin+","+margin+")")
+            .call(d3.axisLeft(y));
+
+
+        d3.select("svg").append("g")
+            .attr("transform","translate("+margin+","+(height+margin)+")")
+            .call(d3.axisBottom(x));
+    }
+
+</script>
+
+
+</body>
+
+
+
+</html>

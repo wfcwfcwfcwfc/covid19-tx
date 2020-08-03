@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="styles.css">
+    <title>COVID-19 Daily New Cases in Texas</title>
+</head>
+<body onload='init()'>
+<h1>COVID-19 Daily New Cases in Texas</h1>
+<div class="buttons">
+    <a href="bycounty.html"><button id="Next" >Next: Cumulative Cases by County</button></a>
+</div>
+
+<svg width=600 height=600>
+
+</svg>
+<div id="tooltip" opacity=0></div>
+<div id="desc">
+    <p>Texas is deeply impacted by the COVID-19 pandemic. As a resident of Texas,
+        I experienced the unfortunate outbreak and the aggravating process. </p>
+    <p>Jan to Feb: COVID-19 was reported in Seatte and Bay Area. Multiple factors made me believe that Texas is
+        immune from such a pandemic in that: Texans has a low usage of public transportation, which contributes to the spread.Texas has a relative low interaction to Asia.
+        Texas has the best medical system in the world.</p>
+    <p>March: Suddenly shelter in place. Starting work from home.</p>
+    <p>April: Cases stays low. Governments prepared for reopen.</p>
+    <p>May: Phase 1 & 2 Reopen</p>
+    <p>June: Phase 3 Reopen but abruptly paused. Cases skyrockted.</p>
+    <p>July: Partial shutdown again. Even some parks are closed.</p>
+    Data Source: <a href="https://dshs.texas.gov/coronavirus/additionaldata.aspx">Texas Department of Health </a>
+
+</div>
+<div></div>
+<script>
+    var data;
+    async function init() {
+        data = await d3.csv('newcases.csv');
+
+        data = {
+            y: "Count",
+            series: data.columns.slice(1).map(key => ({
+                name: key,
+                values: data.map(d => parseInt(d[key]))
+            })),
+            dates: data.map(d => d.Date).map(d3.utcParse("%m/%d/%Y"))
+        };
+        console.log(data);
+        drawBarChart(data);
+        // drawByCountyChart(byCountyData)
+    }
+
+    function drawBarChart(data) {
+        var width = 1000;
+        var height = 600;
+        var margin = 50;
+
+        xdomain = [0,155];
+        xrange = [0,width];
+        ydomain = [0,15000];
+        yrange = [0,height - 2*margin];
+
+        d3.select("svg")
+            .attr("width",width+ 2*margin)
+            .attr("height",height+ 2*margin)
+            .append("g")
+            .attr("transform","translate("+margin+","+margin+")")
+
+        xs = d3.scaleUtc()
+            .domain(d3.extent(data.dates))
+            .range(xrange)
+        ys = d3.scaleLinear().domain(ydomain).range(yrange);
+
+        var tooltip = d3.select("#tooltip");
+
+        d3.select('svg')
+            .append('g')
+            .attr('transform', 'translate('+margin+','+margin+')')
+            .selectAll('rect')
+            .data(data.series[0].values)
+            .enter()
+            .append('rect')
+            .attr('x', function(d, i) {return xs(data.dates[i])})
+            .attr('y',function(d,i) {return height - ys(d);})
+            .attr('width', (width - 2*margin) / data.dates.length)
+            .attr('height',function(d,i) {return ys(d);})
+            .attr('fill', '#0a4a90')
+            .on("mouseover", function(d,i) {
+                var dt = data.dates[i];
+                var ct = data.series[0].values[i];
+                var dtStr = dt.getMonth() + 1 +'-'+ dt.getDate() + '-' +dt.getFullYear();
+                tooltip.style("opacity", 1)
+                    .style("left",(d3.event.pageX)+"px")
+                    .style("top",(d3.event.pageY)+"px")
+                    .html(dtStr + ": "+ ct);
+            })
+        .on("mosueout", function () {
+            tooltip.style("opacity",0)
+        });
+
+        // height - ys(d.cases)
+
+        var y = d3.scaleLinear().domain(ydomain).range([height,0])
+
+        d3.select("svg").append("g")
+            .attr("transform","translate("+margin+","+(height+margin)+")")
+            .call(d3.axisBottom(xs));
+
+        d3.select("svg").append("g")
+            .attr("transform","translate("+margin+","+margin+")")
+            .call(d3.axisLeft(y));
+
+    }
+
+</script>
+</body>
+
+
+
+</html>
